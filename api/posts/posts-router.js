@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const Post = require('./posts-model.js');
 
-// implement your posts router here
 router.get('/', async (req, res) => {
   const posts = await Post.find();
 
@@ -17,6 +16,52 @@ router.get('/:id', async (req, res) => {
   } else {
     res.status(404).json({
       message: 'does not exist',
+    });
+  }
+});
+
+router.post('/', async (req, res) => {
+  try {
+    if (!req.body.title || !req.body.contents) {
+      return res.status(400).json({
+        message: 'Please provide title and contents for the post',
+      });
+    }
+
+    const { id } = await Post.insert(req.body);
+    const post = await Post.findById(id);
+
+    return res.status(201).json(post);
+  } catch (error) {
+    return res.status(500).json({
+      message: 'There was an error while saving the post to the database',
+    });
+  }
+});
+
+router.put('/:id', async (req, res) => {
+  const ogPost = await Post.findById(req.params.id);
+
+  if (!ogPost) {
+    return res.status(404).json({
+      message: 'The post with the specified ID does not exist',
+    });
+  }
+
+  if (!req.body.title || !req.body.contents) {
+    return res.status(400).json({
+      message: 'Please provide title and contents for the post',
+    });
+  }
+
+  try {
+    const { id } = await Post.update(req.params.id, req.body);
+    const post = await Post.findById(id);
+
+    return res.status(200).json(post);
+  } catch (error) {
+    return res.status(500).json({
+      message: 'The post information could not be modified',
     });
   }
 });
